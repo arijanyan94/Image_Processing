@@ -10,8 +10,6 @@ public class Histogram_Match implements PlugInFilter {
 		return DOES_RGB;
 	}
 
-// Method to make the array cumulative
-
 	public double[] arrayCumulativ(int[] arr){
 		double[] resultArray = new double[arr.length];
 		resultArray[0] = arr[0];
@@ -28,8 +26,6 @@ public class Histogram_Match implements PlugInFilter {
 
 
 	public void run(ImageProcessor ip){
-
-// Information of the good image
 
 	int[] redColors = {0,0,0,0,0,0,0,0,0,0,5,9,20,19,22,20,28,34,32,48,52,46,48,36,39,40,49,59,42,68,50,
 								58,72,86,61,56,76,76,104,97,110,113,115,120,153,159,156,142,172,172,177,178,176,
@@ -65,8 +61,6 @@ public class Histogram_Match implements PlugInFilter {
 	int[] badBlue = new int[256];
 	int[] badGreen = new int[256];
 
-// Getting the info of the bad array
-
 		int width = ip.getWidth(), height = ip.getHeight(), pixel, r, g, b;
 		Color color;
 		for (int row = 0; row < height; row++){
@@ -85,16 +79,18 @@ public class Histogram_Match implements PlugInFilter {
 		double[] goodGreenCumulativ = arrayCumulativ(greenColors);
 		double[] goodBlueCumulativ = arrayCumulativ(blueColors);
 
+
+
 		for (int row = 0; row < height; row++){
 			for (int col = 0; col < width; col++) {
 				color = new Color(ip.getPixel(col, row));
 				r = color.getRed();
 				g = color.getGreen();
-				b = color.getBlue();
-
-				ip.putPixel(col, row, 255*255*search(goodRedCumulativ,0,goodRedCumulativ.length-1, badRedCumulativ[r]) + 
-					255*search(goodGreenCumulativ,0,goodGreenCumulativ.length-1, badGreenCumulativ[g]) + 
-					search(goodBlueCumulativ,0,goodBlueCumulativ.length-1, badBlueCumulativ[b]));	
+				b = color.getBlue();	
+				int[] colorInt = {search(goodRedCumulativ,0,goodRedCumulativ.length-1, badRedCumulativ[r]),
+					search(goodGreenCumulativ,0,goodGreenCumulativ.length-1, badGreenCumulativ[g]),
+					search(goodBlueCumulativ,0,goodBlueCumulativ.length-1, badBlueCumulativ[b])};
+				ip.putPixel(col, row,colorInt);
 			}
 		}
 	}
