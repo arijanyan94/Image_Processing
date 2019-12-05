@@ -1,1 +1,116 @@
+import java.util.Arrays;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import ij.plugin.filter.PlugInFilter;
+import java.awt.Color;
 
+public class Histogram_Match implements PlugInFilter {
+
+	public int setup(String args, ImagePlus im) {
+		return DOES_RGB;
+	}
+
+// Method to make the array cumulative
+
+	public double[] arrayCumulativ(int[] arr){
+		double[] resultArray = new double[arr.length];
+		resultArray[0] = arr[0];
+		for(int i=1; i<arr.length; i++){
+			resultArray[i] = arr[i] + resultArray[i-1];
+		}
+		for(int i=0; i<resultArray.length; i++){
+			resultArray[i] = resultArray[i]/resultArray[255];
+		}
+		return resultArray;
+
+	}
+
+
+
+	public void run(ImageProcessor ip){
+
+// Information of the good image
+
+	int[] redColors = {0,0,0,0,0,0,0,0,0,0,5,9,20,19,22,20,28,34,32,48,52,46,48,36,39,40,49,59,42,68,50,
+								58,72,86,61,56,76,76,104,97,110,113,115,120,153,159,156,142,172,172,177,178,176,
+								195,208,223,236,232,286,302,299,298,309,313,318,329,374,360,420,422,471,496,497,
+								614,672,756,778,658,695,608,633,749,805,755,716,608,643,680,702,722,831,845,744,
+								724,695,737,740,836,870,944,892,830,799,780,701,697,751,696,732,600,488,470,498,458,
+								404,452,538,499,584,627,499,372,245,184,112,71,28,16,12,11,20,22,29,32,39,43,56,62,
+								104,108,113,112,161,144,108,104,105,130,122,139,119,117,121,93,36,11,18,3,0,0,0,0,0,
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+								0,0,0,0,0,0,0,0};
+
+	int[] blueColors = {4,4,4,4,3,12,16,25,38,55,91,143,177,211,243,304,340,387,427,575,602,710,812,850,1088,1245,
+								1369,1519,1605,1593,1549,1464,1488,1544,1566,1478,1574,1468,1310,1292,1187,1146,1093,951,833,
+								825,815,735,748,643,623,566,497,553,474,400,346,255,156,117,100,46,23,20,16,13,21,15,14,11,9,15,
+								8,14,12,13,14,13,22,28,32,19,21,30,28,17,38,41,50,51,81,88,83,63,53,70,50,35,48,34,41,51,62,45,33,
+								9,6,8,1,2,1,8,8,2,9,8,7,5,8,4,4,6,11,8,9,7,17,14,17,20,27,35,52,54,72,80,73,104,129,145,103,105,100,
+								109,136,128,135,112,98,98,76,54,45,24,8,16,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+	int[] greenColors = {0,0,0,0,0,0,0,0,1,10,13,28,30,46,50,83,89,88,108,123,143,144,142,168,221,165,196,219,
+								248,300,320,345,453,436,458,472,511,524,531,603,568,564,605,673,714,729,800,942,1033,
+								1017,998,902,808,860,871,1001,970,978,988,997,952,970,939,922,906,813,794,815,726,695,
+								669,614,614,610,603,623,587,573,509,494,517,597,575,506,435,378,278,237,141,76,49,31,26,
+								30,34,58,66,68,74,116,98,71,76,82,72,48,46,46,53,52,37,27,16,7,3,4,5,4,4,4,8,5,4,5,5,8,9,
+								9,9,11,10,12,19,22,23,34,44,68,71,57,73,73,95,111,147,112,107,109,108,129,130,140,109,102,
+								88,62,49,50,60,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+	int[] badRed = new int[256];
+	int[] badBlue = new int[256];
+	int[] badGreen = new int[256];
+
+// Getting the info of the bad array
+
+		int width = ip.getWidth(), height = ip.getHeight(), pixel, r, g, b;
+		Color color;
+		for (int row = 0; row < height; row++){
+			for (int col = 0; col < width; col++) {
+				color = new Color(ip.getPixel(col, row));
+				badRed[color.getRed()]++;
+				badGreen[color.getGreen()]++;
+				badBlue[color.getBlue()]++;
+			}
+		}
+		double[] badRedCumulativ = arrayCumulativ(badRed);
+		double[] badGreenCumulativ = arrayCumulativ(badGreen);
+		double[] badBlueCumulativ = arrayCumulativ(badBlue);
+
+		double[] goodRedCumulativ = arrayCumulativ(redColors);
+		double[] goodGreenCumulativ = arrayCumulativ(greenColors);
+		double[] goodBlueCumulativ = arrayCumulativ(blueColors);
+
+		for (int row = 0; row < height; row++){
+			for (int col = 0; col < width; col++) {
+				color = new Color(ip.getPixel(col, row));
+				r = color.getRed();
+				g = color.getGreen();
+				b = color.getBlue();
+
+				ip.putPixel(col, row, 255*255*search(goodRedCumulativ,0,goodRedCumulativ.length-1, badRedCumulativ[r]) + 
+					255*search(goodGreenCumulativ,0,goodGreenCumulativ.length-1, badGreenCumulativ[g]) + 
+					search(goodBlueCumulativ,0,goodBlueCumulativ.length-1, badBlueCumulativ[b]));	
+			}
+		}
+	}
+
+	public int search(double arr[], int first, int last, double key){  
+        if (last>=first){  
+            int mid = first + (last - first)/2;  
+            if (arr[mid] == key){  
+            return mid;  
+            }  
+            if (arr[mid] > key){  
+            return search(arr, first, mid-1, key);  
+            }else{  
+            return search(arr, mid+1, last, key);  
+            }  
+        }  
+        return last;      
+ 	} 
+}
